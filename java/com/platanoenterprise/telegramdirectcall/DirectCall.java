@@ -1,40 +1,41 @@
 package com.platanoenterprise.telegramdirectcall;
 
-import android.util.Log;
+import android.content.Intent;
+
+import java.lang.reflect.Method;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
+import static de.robv.android.xposed.XposedHelpers.findClass;
+import static de.robv.android.xposed.XposedHelpers.findMethodBestMatch;
 
 
 /**
  * Created by rafa on 24/11/15.
  */
 public class DirectCall implements IXposedHookLoadPackage {
-    private Object telefono;
 
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!lpparam.packageName.equals("org.telegram.messenger"))
+
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws NoSuchFieldException {
+        if (!lpparam.packageName.equals("org.telegram.messenger")) {
             return;
+        }
 
-
-        XposedBridge.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-
-        //XposedBridge.log("Loaded app: " + lpparam.packageName);
-
-        findAndHookMethod("org.telegram.messenger.ui.LaunchActivity", lpparam.classLoader, "onFragmentCreate", new XC_MethodHook() {
+        Class<?> profileClass = findClass("org.telegram.ui", lpparam.classLoader);
+        Method createView = findMethodBestMatch(profileClass, "createView", Intent.class, int.class);
+        XposedBridge.hookMethod(createView, new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
-                Object other = XposedHelpers.getSurroundingThis(param.thisObject);
-                telefono = XposedHelpers.getObjectField(param, "User.phone");
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                XposedBridge.log("Start of startActivityForResult callback");
 
+                Intent intent = (Intent) param.args[0];
+                /**/
+
+                XposedBridge.log("End of startActivityForResult callback");
             }
         });
-
-        Log.wtf("Debuggin", "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
     }
 }
