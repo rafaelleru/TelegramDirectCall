@@ -24,8 +24,13 @@ public class DirectCall implements IXposedHookLoadPackage {
             return;
         }
 
-        Class<?> profileClass = findClass("org.telegram.ui", lpparam.classLoader);
+        Class<?> profileClass = findClass("org.telegram.ui.ProfileActivity", lpparam.classLoader);
+        if(profileClass != null)
+            XposedBridge.log(profileClass.getName());
+        else XposedBridge.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+
         Method createView = findMethodBestMatch(profileClass, "createView", Intent.class, int.class);
+
         XposedBridge.hookMethod(createView, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
